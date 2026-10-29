@@ -1,0 +1,23 @@
+# Forged producer: same workflow *name* as the trusted one, supplied by the PR.
+name: Nix files edited
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  fake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build attacker-chosen artifact payload
+        run: |
+          mkdir -p out
+          for p in x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin; do
+            printf '/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-attacker-before\n' > "out/requisites-${p}-before.list"
+            printf '/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-attacker-before\n/nix/store/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-attacker-added-by-fork-pr\n' > "out/requisites-${p}-after.list"
+          done
+          echo 1 > out/pr_number.txt
+          cat out/*.list out/pr_number.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requisites-x86_64-linux
+          path: out/
